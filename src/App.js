@@ -1,6 +1,8 @@
 import { useState,useEffect } from 'react';
-import Loader from 'react-loader-spinner';
-const url = "https://jsonplaceholder.typicode.com/albums/";
+import Loader from './components/Loader';
+import AlbumsList from './components/AlbumsList';
+import AlbumImages from './components/AlbumImages';
+import  { FetchList , FetchUserData , FetchImages } from './Services/ApiFile'
 
 const App = () => {
   const [albums , setalbum] = useState([]);
@@ -14,24 +16,16 @@ const App = () => {
     fetchData();
   },[]); 
 
-  
-  const delay = ms => new Promise(r => setTimeout(r, ms));
-
   const fetchData = async () => {
-    const res = await fetch(url);
-    const data = await res.json();
-    await delay(1000);
-    setLoader(false)
+    const data = await FetchList();
+    setLoader(false);
     setalbum(data);
   }
 
   const handleClick = async (e) =>{
     setLoader(true);
-    const res = await fetch(url + e.target.id);
-    const data = await res.json();
-    const res1 = await fetch(url + e.target.id +"/photos");
-    const data1 = await res1.json();
-    await delay(1000);
+    const data = await FetchUserData(e);
+    const data1 = await FetchImages(e);
     setOpenPhotos(true);
     setLoader(false);
     setselectedalbum(data);
@@ -40,62 +34,16 @@ const App = () => {
 
 
   return (
+    
     <div>
       
-      {loader? <Loader type="Oval" color="#00BFFF" height={200} width={200} style= {{textAlign: "center", display: "block" , margin: "150px auto"}}/> : null}
-      {!openPhotos && !loader ? 
-      <AlbumsList albums={albums} header="Album App" onClick={handleClick} />: !loader? <AlbumImage photos={photos} albumdetail={selectedalbum}/> : null}
+      {loader? <Loader />: null}
+      {!openPhotos && !loader ? <AlbumsList albums={albums} header="Album App" onClick={handleClick} /> : 
+      !loader? <AlbumImages photos={photos} albumdetail={selectedalbum}/> : null}
     
      </div>
   );
 }
-
-const AlbumsList = (props) =>{
-  const {albums, header, onClick} = props;
-  return(
-    <div  className="Container" >
-      <h1>{header}</h1>
-      <ul>
-          {albums.map(({id, title}) => (                                                                                                                             
-            <li key={id} onClick={onClick} id={id}>{title}</li>
-          ))}
-      </ul> 
-
-      </div>
-  );
-}
-
-const AlbumImage = (props) =>{
-  const {photos, albumdetail: {title}} = props;
-  const [openModalbox, setOpenModal] = useState(false);
-  const [selectedimg, setselectedimg] = useState([]);
-  const openModal = (e) =>{
-    setOpenModal(true);
-    var data = photos.filter((photo) => (photo.id == e.target.id))
-    console.log(e.target.id);
-    setselectedimg(data)
-  }
-  const getRandomSize = (min, max) => {
-    return Math.round(Math.random() * (max - min) + min);
-  }
-  return(
-    <div  className="Container" >
-    
-       {!openModalbox ? <div> 
-         <h1>Our Gallery</h1>
-          <p>Album Name:<span> {title} </span></p>
-          <div className="photos-grid">
-            {photos.map(({id,thumbnailUrl,title}) => (<img src={thumbnailUrl} id={id}  onClick={openModal} alt={title} height={getRandomSize(200, 400)} style={{cursor:"pointer"}} /> ))}
-          </div> </div> : <div> 
-            <h1>Selected Image</h1>
-            <p>Album Name:<span> {title} </span></p>
-           { selectedimg.map(({url,title}) =>(<div><img src={url} className="single-img" alt={title}/><h3 style={{textAlign:"center"}}>image Name : {title}</h3> </div>))} </div>
-       }
-       
-    </div>
-  )
-}
-
 
 
 export default App;
